@@ -4,7 +4,7 @@ Turn handling (calling the Clash class)
 Creating Turn summary (and inputting into history)
 Resolving Turn summary into altering the game state
 Turn output - all the messaging that says who did what
-Output State - to set the message for each turn
+Output State - to set the message for each turn - X
 Game state instantiating a turn
 The large runner that interacts with game state
 Enemy AI

@@ -117,27 +117,27 @@ class Clash
 
 
   def resolve #resolves the clash
-    case move_set1[:action]
+    case input_1[:action]
     when "a" #When Player 1 attacks
-      if move_set2[:action] == "a" #P2 also attacks
-        attack_attack(move_set1[:power], move_set2[:power])
-      elsif move_set[:action] == "d" #P2 Defends
-        attack_defend(move_set1[:power])
+      if input_2[:action] == "a" #P2 also attacks
+        attack_attack(input_1[:power], input_2[:power])
+      elsif input_2[:action] == "d" #P2 Defends
+        attack_defend(input_1[:power])
       else #P2 regroups - full hit
-        self.health_damage = move_set1[:power]
+        self.health_damage = input_1[:power]
       end
     when "d" #when player 1 defends
-      if move_set2[:action] == "a" #P2 also attacks
-        attack_defend(-(move_set2[:power])) #negative to ensure shield damage goes to P1
-      elsif move_set[:action] == "d" #P2 Defends
+      if input_2[:action] == "a" #P2 also attacks
+        attack_defend(-(input_2[:power])) #negative to ensure shield damage goes to P1
+      elsif input_2[:action] == "d" #P2 Defends
         nil #nothing happens
       else #P2 regroups
         self.p2_charge = true
       end
     when "r"
-      if move_set2[:action] == "a" #P2 also attacks
-        self.health_damage = -(move_set1[:power]) #negative to ensure damage goes to P1
-      elsif move_set2[:action] == "d" #P2 Defends
+      if input_2[:action] == "a" #P2 also attacks
+        self.health_damage = -(input_1[:power]) #negative to ensure damage goes to P1
+      elsif input_2[:action] == "d" #P2 Defends
         self.p1_charge=true
       else
         self.p1_charge=true
@@ -241,14 +241,6 @@ class Turn
 
 end
 
-
-
-
-master = GameState.new()
-master.open_game
-master.output_state
-master.player.regroup
-master.output_state
 
 #Rule base for the game
 
