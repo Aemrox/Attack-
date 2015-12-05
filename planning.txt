@@ -1,11 +1,11 @@
 Things I have left to write
 
-Turn handling (calling the Clash class)
-Creating Turn summary (and inputting into history)
-Resolving Turn summary into altering the game state
-Turn output - all the messaging that says who did what
+Turn handling (calling the Clash class) - X
+Creating Turn summary (and inputting into history) - X
+Resolving Turn summary into altering the game state - X
+Turn output - all the messaging that says who did what - X
 Output State - to set the message for each turn - X
-Game state instantiating a turn
+Game state instantiating a turn - X
 The large runner that interacts with game state
 Enemy AI
 
@@ -31,6 +31,7 @@ Turn
   Places I'd like to go in the future
 
   Saving characters - and keeping records of wins/losses
-  Different monsters
+  Different monsters - create a new class that inherits from user, but takes new inputs on initialize
+    - would allow me to build a more complex Yaml to determine different stats and tendencies
   Levels of difficulty based around an expanded AI and different monster_names
   Player V Player - which requires LAN or internet based connections between clients (much more advanced)
