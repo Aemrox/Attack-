@@ -16,15 +16,15 @@ Eventually, as we learn more things, I'd like to build the game out - perhaps ma
 
 THE REASONING
 
-I built this in an effort to cement what we learned over the weak, and as an exercise in building something larger using some of the object oriented design principles we learned towards the end of the week.
+I built this in an effort to cement what we learned over the week, and as an exercise in building something larger using some of the object-oriented design principles we learned towards the end of the week.
 
 Keeping track of multiple objects and managing the development of many moving parts proved to be pretty difficult. It required having far more planning and organization than I originally thought.
 
 THE RULES
 
-The game pits you against a randomly generated monster (all have the same base statistics). From there you have three options, to Attack, Defend, or Regroup.
+The game pits you against a randomly-generated monster (all have the same base statistics). From there you have three options: to Attack, Defend, or Regroup.
 
-Attacking is a dynamic move, whose power is determined by the number of capital letters used to type out the word attack. Attacking consumes power points (again the number of capital letters used)
+Attacking is a dynamic move, whose power is determined by the number of capital letters used to type out the word attack. Attacking consumes power points (again the number of capital letters used).
 
 Defending defends against attack, but consumes shield points.
 
@@ -38,7 +38,7 @@ The game ends when health reaches zero.
 
 
 
-Places I'd like to go in the future
+Places I'd like to go in the future:
 
   Saving characters - and keeping records of wins/losses
   Different monsters
