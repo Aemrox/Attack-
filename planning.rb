@@ -2,10 +2,11 @@ require 'YAML'
 require 'pry'
 
 class GameState
-  attr_accessor :player, :monster, :turn_number
+  attr_accessor :player, :monster, :turn_number, :game_over
 
   def initialize()
     @turn_number = 0
+    @game_over = false
   end
 
   def open_game! #sets the player
@@ -23,14 +24,31 @@ class GameState
     new_enemy
   end
 
-  def conduct_turn
-    #creates and resolves a turn
-    output_state
-    this_turn = Turn.new
+  def conduct_turn #creates and resolves a turn
+    self.turn_number = turn_number + 1
+    output_state #output the state
+    this_turn = Turn.new #create a turn
     sleep(1)
     #monster_input = self.enemy_AI #This is where the monster's move is determined
-    this_turn.run_turn!("attack")
-    alter_game_state(this_turn.summary)
+    monster_input = {
+      :action => "attack",
+      :power => 1
+    }
+    exit_game = this_turn.run_turn!(monster_input, player.power)#run turn
+    if exit_game
+      self.game_over = true
+      return true
+    end
+    alter_game_state!(this_turn.summary)#alter game state with the results
+    death_check #check for death
+  end
+
+  def reset! #resets the game!
+    self.game_over = false
+    player.reset_player!
+    puts "#{player.name} is ready for another go!"
+    new_enemy
+    self.turn_number = 0
   end
 
   def alter_game_state! (turn_summary)
@@ -46,42 +64,39 @@ class GameState
     # }
 
     #output the choices
-    puts "#{player.name} chose to #{turn_summary[:player_input]}"
-    puts "#{monster.name} chose to #{turn_summary[:monster_input]}"
+    turn_summary.output_summary(player.name, monster.name)
 
     #part 2 depleting the power from actions
-    player.strike!(turn_summary[:player_input][:power]) if turn_summary[:player_input][:action] == "attack"
-    monster.strike!(turn_summary[:monster_input][:power]) if turn_summary[:monster_input][:action] == "attack"
+    player.strike!(turn_summary.player_input[:power]) if turn_summary.player_input[:action] == "attack"
+    monster.strike!(turn_summary.monster_input[:power]) if turn_summary.monster_input[:action] == "attack"
 
-    #part 3 dealing with damage
-    if turn_summary[:receiver] == "monster"
+    #setting the attacked value to determine the strength of recharge roll
+    monster_attacked = false
+    player_attacked = false
+
+    #part 4 dealing with damage
+    if turn_summary.receiver == "monster"
       #deal with monster damage
-      if turn_summary[:damage_type] == :shield #shield damage
-        monster.take_shield_hit!(turn_summary[:damage])
-      elsif turn_summary[:damage_type] == :health #health damage
-        monster.take_health_hit!(turn_summary[:damage])
+      if turn_summary.damage_type == :shield #shield damage
+        monster.take_shield_hit!(turn_summary.damage_amount)
+      elsif turn_summary.damage_type == :health #health damage
+        monster.take_health_hit!(turn_summary.damage_amount)
+        monster_attacked = true
       end
-    elsif turn_summary[:receiver] == "player"
+    elsif turn_summary.receiver == "player"
       #deal with player damage
-      if turn_summary[:damage_type] == :shield #shield damage
-        player.take_shield_hit!(turn_summary[:damage])
-      elsif turn_summary[:damage_type] == :health #health damage
-        player.take_health_hit!(turn_summary[:damage])
+      if turn_summary.damage_type == :shield #shield damage
+        player.take_shield_hit!(turn_summary.damage_amount)
+      elsif turn_summary.damage_type == :health #health damage
+        player.take_health_hit!(turn_summary.damage_amount)
+        player_attacked = true
       end
     end
 
-    #part 4 checking for regroup
-    player.regroup! if turn_summary[:recharge_player]
-    monster.regroup! if turn_summary[:monster_recharge]
+    #part 5 checking for regroup
+    player.regroup!(player_attacked) if turn_summary.recharge_player
+    monster.regroup!(monster_attacked) if turn_summary.recharge_monster
 
-  end
-
-  def output_state
-    #outputs current game state i.e. User and Monster health, shield, power, and turn number
-    puts "It is turn #{turn_number}
-    #{player.name} - Health:#{player.health} Shield:#{player.shield} Power:#{player.power}
-    #{monster.name} - Health:#{monster.health} Shield:#{monster.shield} Power:#{monster.power}
-    "
   end
 
   private
@@ -97,6 +112,24 @@ class GameState
     self.monster = User.new(monster_names.sample)
     puts "You are facing a vicious #{monster.name}"
     sleep(1)
+  end
+
+  def death_check
+    if player.health <= 0
+      puts "You have died. The world moved on and slowly forgot #{player.name}"
+      self.game_over = true
+    elsif monster.health <= 0
+      puts "You have slain the #{monster.name}! Poetic champions compose new power ballads in your name!"
+      self.game_over = true
+    end
+  end
+
+  def output_state
+    #outputs current game state i.e. User and Monster health, shield, power, and turn number
+    puts "It is turn #{turn_number}
+    #{player.name} - Health:#{player.health} Shield:#{player.shield} Power:#{player.power}
+    #{monster.name} - Health:#{monster.health} Shield:#{monster.shield} Power:#{monster.power}
+    "
   end
 
 end
@@ -116,32 +149,41 @@ class User
 
   end
 
+  def reset_player!
+    self.stats = {
+      :health => 5,
+      :power => 5,
+      :shield => 5
+    }
+  end
+
   def change_stats!(stat,amount) #to ADD stats, value must be negative
     self.stats[stat] -= amount
   end
 
   def take_health_hit!(value)
-    change_stats(:health, value)
+    change_stats!(:health, value)
     puts "#{name} took #{value} damage to their health!"
   end
 
   def take_shield_hit!(value)
-    change_stats(:shield, value)
+    change_stats!(:shield, value)
     puts "#{name} defended and took #{value} damage to their shield!"
   end
 
   def strike!(value)
-    change_stats(:power, value)
+    change_stats!(:power, value)
     puts "#{name} struck for #{value} damage!"
   end
 
-  def regroup!
+  def regroup!(attacked)
+    attacked ? max = 2 : max = 3
     #rolling for power
-    roll = rand(1..3)
-    change_stats(:power,-(roll)) #negative roll to add value
+    roll = rand(1..max)
     #rolling for shield
-    roll2 = rand(1..3)
-    change_stats(:shield,-(roll2)) #negative roll to add value
+    roll2 = rand(1..max)
+    change_stats!(:power,-(roll)) #negative roll to add value
+    change_stats!(:shield,-(roll2)) #negative roll to add value
     puts "#{name} regrouped and recovered #{roll} power and #{roll2} shield"
   end
 
@@ -175,19 +217,17 @@ class Clash
 
 
   def resolve! #resolves the clash
-    binding.pry
     case input_1[:action]
     when "attack" #When Player 1 attacks
-      binding.pry
       if input_2[:action] == "attack" #P2 also attacks
         attack_attack(input_1[:power], input_2[:power])
       elsif input_2[:action] == "defend" #P2 Defends
         attack_defend(input_1[:power])
       else #P2 regroups - full hit
+        self.p2_charge = true
         self.health_damage = input_1[:power]
       end
     when "defend" #when player 1 defends
-      binding.pry
       if input_2[:action] == "attack" #P2 also attacks
         attack_defend(-(input_2[:power])) #negative to ensure shield damage goes to P1
       elsif input_2[:action] == "defend" #P2 Defends
@@ -197,6 +237,7 @@ class Clash
       end
     when "regroup"
       if input_2[:action] == "attack" #P2 also attacks
+        self.p1_charge = true
         self.health_damage = -(input_1[:power]) #negative to ensure damage goes to P1
       elsif input_2[:action] == "defend" #P2 Defends
         self.p1_charge=true
@@ -249,17 +290,30 @@ class Clash
 end
 
 class TurnSummary #this generates a turn_summary which can be included in the history of all turns, and can be used to alter the game state
-  attr_accessor :summary
+  attr_accessor :damage_type, :damage_amount, :receiver, :recharge_player, :recharge_monster, :player_input, :monster_input
   def initialize(player_input, monster_input, damage_type, damage_amount, receiver, recharge_player, recharge_monster)
-    @summary = {
-      :damage_type => damage_type, #evaluates to :health or :shield
-      :damage_amount => damage_amount, #the number
-      :receiver => receiver, #player or monster or nil for no damage
-      :recharge_player => recharge_player, #true or false
-      :recharge_monster => recharge_monster,
-      :player_input => player_input, #still hash with :action and :power as keys
-      :monster_input => monster_input
-    }
+    @damage_type = damage_type
+    @damage_amount = damage_amount
+    @receiver = receiver
+    @recharge_player = recharge_player
+    @recharge_monster = recharge_monster
+    @player_input = player_input
+    @monster_input = monster_input
+  end
+
+  def output_summary(player_name,monster_name)
+    player_message = "#{player_name} chose to #{player_input[:action]}"
+    if player_input[:action] == "attack"
+      player_message += " with a power of #{player_input[:power]}"
+    end
+
+    monster_message = "#{monster_name} chose to #{monster_input[:action]}"
+    if monster_input[:action] == "attack"
+      monster_message += " with a power of #{monster_input[:power]}"
+    end
+
+    puts player_message
+    puts monster_message
   end
 end
 
@@ -271,11 +325,15 @@ class Turn
   def initialize()
   end
 
-  def run_turn!(monster_input)
-    self.player_input = get_input
+  def run_turn!(monster_input, player_power)
+    self.player_input = get_input(player_power)#player_power used to evaluate if the player has the attack points to perform their move
+    return true if player_input == "exit"
     this_clash = Clash.new(evaluate_move(player_input),monster_input)
+    # binding.pry
     summary = this_clash.create_turn_summary
+    # binding.pry
     add_turn(summary)
+    false
   end
 
   def action_list
@@ -288,6 +346,7 @@ class Turn
     Your Power shows how many attack points you have.
 
     You can choose to 'attack', 'defend', or 'regroup'.
+    Or if you wanna quit just type 'exit' I GUESS
     Attacking expends power points to damage your opponent
     - but take Note! you determine the power of your attack by how many capital letters you use!
     Defending guards against attack at the expense of shield points
@@ -307,9 +366,9 @@ class Turn
     }
   end
 
-  def add_turn(summary)#takes in a turn summary and adds it to the history
-    @summary = summary
-    @@Turn_history << summary
+  def add_turn(turn_summary)#takes in a turn summary and adds it to the history
+    @summary = turn_summary
+    @@Turn_history << turn_summary
   end
 
   def action_list
@@ -322,6 +381,7 @@ class Turn
     Your Power shows how many attack points you have.
 
     You can choose to 'attack', 'defend', or 'regroup'.
+    Or if you wanna quit just type 'exit' I GUESS
     Attacking expends power points to damage your opponent
     - but take Note! you determine the power of your attack by how many capital letters you use!
     Defending guards against attack at the expense of shield points
@@ -331,40 +391,23 @@ class Turn
     "
   end
 
-  def get_input #recieves input from the user, validates and returns
+  def get_input(player_power) #recieves input from the user, validates and returns the move broken down in a hash
     puts "The move is yours: (type 'help' for training)"
     input = gets.chomp
-    if input == "help"
-      action_list
-      return get_input
-    elsif (input.downcase == ("attack" || "defend" || "regroup"))
+    if input == "exit"
       return input
+    elsif input == "help"
+      action_list
+      return get_input(player_power) #recur to get new input
+    elsif (input.downcase == "attack" && input.scan(/[A-Z]/).length > player_power)
+      #this is if the player's move is an attack while it's power exceeds the available power
+      puts "You don't have enough Power points to make this attack!"
+      return get_input(player_power) #recur to get new input
+    elsif ((input.downcase == "attack") || (input.downcase =="defend") || (input.downcase == "regroup"))
+      return input#move is valid (BASE CASE)
     else
       puts ("That's not a real move! type 'help' for training")
-      return get_input
+      return get_input(player_power)#recur to get new input
     end
   end
 end
-
-
-#Rule base for the game
-
-#PVE - you pick an action, copmuter responds with AI action
-#PVP - two people pick an action and submit at once
-
-#List of stats
-#Health
-# => Hit Points, you die when 0 (for now starts at X)
-#Shield
-# => your defense, gets used when you use defense
-#Power
-# => like PP in pokemon, gets used up when you attack
-
-#List of Actions
-#attack -
-# => an attack whose power (and refractory period) is defined by
-# => the amount number of capitals
-#defend -
-# => nullfies an attack at the expense of your shield
-#regroup -
-# => recharges your defense OR attack points based your previous action

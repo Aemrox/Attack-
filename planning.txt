@@ -6,7 +6,9 @@ Resolving Turn summary into altering the game state - X
 Turn output - all the messaging that says who did what - X
 Output State - to set the message for each turn - X
 Game state instantiating a turn - X
-The large runner that interacts with game state
+Checks for Death and end of Game - X
+Checks for exceeding the power available - X
+The large runner that interacts with game state - halfway
 Enemy AI
 
 Then the debugging starts
@@ -20,12 +22,12 @@ User
   change stats - X
   regroup - X
 Clash
-  resolve
-  maybe generating a turn summary happens in clash?
+  resolve - X
+  maybe generating a turn summary happens in clash? - X
 Turn
-  evaluate move
-  action list
-  get_input
+  evaluate move - X
+  action list - X
+  get_input - X
 
 
   Places I'd like to go in the future
