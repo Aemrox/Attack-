@@ -37,3 +37,25 @@ Turn
     - would allow me to build a more complex Yaml to determine different stats and tendencies
   Levels of difficulty based around an expanded AI and different monster_names
   Player V Player - which requires LAN or internet based connections between clients (much more advanced)
+
+  #Rule base for the game
+
+  #PVE - you pick an action, copmuter responds with AI action
+  #PVP - two people pick an action and submit at once
+
+  #List of stats
+  #Health
+  # => Hit Points, you die when 0 (for now starts at X)
+  #Shield
+  # => your defense, gets used when you use defense
+  #Power
+  # => like PP in pokemon, gets used up when you attack
+
+  #List of Actions
+  #attack -
+  # => an attack whose power (and refractory period) is defined by
+  # => the amount number of capitals
+  #defend -
+  # => nullfies an attack at the expense of your shield
+  #regroup -
+  # => recharges your defense OR attack points based your previous action
